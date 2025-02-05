@@ -1,4 +1,3 @@
-<!-- components/TimeLogManagement.vue -->
 <template>
   <div>
     <h1>Time Logs</h1>
@@ -49,8 +48,12 @@ export default {
     async fetchEmployees() {
       try {
         const response = await api.getEmployees()
-        console.log(response)
-        this.employees = response.data.results
+        console.log('Fetch Employees Response:', response)
+        if (response.data && Array.isArray(response.data.results)) {
+          this.employees = response.data.results
+        } else {
+          console.error('Unexpected response structure for employees:', response.data)
+        }
       } catch (error) {
         console.error('Error fetching employees:', error)
       }
@@ -58,8 +61,12 @@ export default {
     async fetchTimeLogs() {
       try {
         const response = await api.getTimeLogs()
-        console.log(response)
-        this.timeLogs = response.data.results
+        console.log('Fetch TimeLogs Response:', response)
+        if (response.data && Array.isArray(response.data.results)) {
+          this.timeLogs = response.data.results
+        } else {
+          console.error('Unexpected response structure for time logs:', response.data)
+        }
       } catch (error) {
         console.error('Error fetching time logs:', error)
       }

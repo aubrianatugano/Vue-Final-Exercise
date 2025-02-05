@@ -7,6 +7,17 @@ const apiClient = axios.create({
   },
 })
 
+apiClient.interceptors.response.use(
+  (response) => {
+    console.log('API Response:', response)
+    return response
+  },
+  (error) => {
+    console.error('API Error:', error)
+    return Promise.reject(error)
+  },
+)
+
 export default {
   // Fetch Companies with Pagination & Search
   getCompanies(params) {
@@ -42,7 +53,22 @@ export default {
 
   // Fetch Employees with Pagination & Search
   getEmployees(params) {
-    return apiClient.get('/Employees', { params })
+    return apiClient.get('/Employees', { params }).then((response) => {
+      console.log('getEmployees Response:', response)
+      // Ensure the response has the expected structure
+      if (response.data && Array.isArray(response.data.data)) {
+        return {
+          data: response.data.data,
+          total: response.data.total,
+        }
+      } else {
+        console.error('Unexpected response structure:', response.data)
+        return {
+          data: [],
+          total: 0,
+        }
+      }
+    })
   },
 
   // Create Employee

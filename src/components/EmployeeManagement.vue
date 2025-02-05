@@ -1,14 +1,5 @@
 <template>
   <el-container class="common-layout">
-    <el-header class="header">
-      <h1 class="header-title">Employee Management</h1>
-      <div class="nav-links">
-        <el-link type="primary" href="/companies">Companies</el-link>
-        <el-link type="primary" href="/employees">Employees</el-link>
-        <el-link type="primary" href="/timelogs">TimeLogs</el-link>
-      </div>
-    </el-header>
-
     <el-container>
       <el-aside class="aside">
         <el-form :model="newEmployee" label-width="100px" class="form-section">
@@ -119,145 +110,114 @@
   </el-container>
 </template>
 
-<script>
-import { ref } from 'vue'
-import api from '../api'
+<script setup>
+import { ref, onMounted } from 'vue'
+import api from '@/services/api'
 
-export default {
-  setup() {
-    const newEmployee = ref({
-      name: '',
-      email: '',
-      position: '',
-      salary: 0,
-      sssNumber: '',
-      pagIbigNumber: '',
-      company: '',
+const newEmployee = ref({
+  name: '',
+  email: '',
+  position: '',
+  salary: 0,
+  sssNumber: '',
+  pagIbigNumber: '',
+  company: '',
+})
+
+const employees = ref([])
+const searchQuery = ref('')
+const employeePage = ref(1)
+const employeePageSize = ref(10)
+const totalEmployees = ref(0)
+const updateDialogVisible = ref(false)
+const selectedEmployee = ref({
+  name: '',
+  email: '',
+  position: '',
+  salary: 0,
+  sssNumber: '',
+  pagIbigNumber: '',
+  company: '',
+})
+
+const fetchEmployees = async () => {
+  try {
+    const response = await api.getEmployees({
+      page: employeePage.value,
+      pageSize: employeePageSize.value,
+      searchQuery: searchQuery.value,
     })
-    const employees = ref([])
-    const searchQuery = ref('')
-    const employeePage = ref(1)
-    const employeePageSize = ref(10)
-    const totalEmployees = ref(0)
-    const updateDialogVisible = ref(false)
-    const selectedEmployee = ref({
-      name: '',
-      email: '',
-      position: '',
-      salary: 0,
-      sssNumber: '',
-      pagIbigNumber: '',
-      company: '',
-    })
-
-    const fetchEmployees = async () => {
-      try {
-        const response = await api.getEmployees({
-          page: employeePage.value,
-          pageSize: employeePageSize.value,
-          searchQuery: searchQuery.value,
-        })
-        employees.value = response.data
-        totalEmployees.value = response.total
-      } catch (error) {
-        console.error('Failed to fetch employees:', error)
-      }
+    console.log('Fetch Employees Response Data:', response.data)
+    if (response.data && Array.isArray(response.data.data)) {
+      employees.value = response.data.data
+      totalEmployees.value = response.data.total
+    } else {
+      console.error('Unexpected response structure:', response.data)
     }
-
-    const addEmployee = async () => {
-      try {
-        await api.createEmployee(newEmployee.value)
-        fetchEmployees()
-        newEmployee.value = {
-          name: '',
-          email: '',
-          position: '',
-          salary: 0,
-          sssNumber: '',
-          pagIbigNumber: '',
-          company: '',
-        }
-      } catch (error) {
-        console.error('Failed to add employee:', error)
-      }
-    }
-
-    const removeEmployee = async (employeeId) => {
-      try {
-        await api.deleteEmployee(employeeId)
-        fetchEmployees()
-      } catch (error) {
-        console.error('Failed to delete employee:', error)
-      }
-    }
-
-    const openUpdateDialog = (employee) => {
-      selectedEmployee.value = { ...employee }
-      updateDialogVisible.value = true
-    }
-
-    const updateEmployee = async () => {
-      try {
-        await api.updateEmployee(selectedEmployee.value.id, selectedEmployee.value)
-        fetchEmployees()
-        updateDialogVisible.value = false
-      } catch (error) {
-        console.error('Failed to update employee:', error)
-      }
-    }
-
-    const debouncedSearchEmployees = () => {
-      fetchEmployees()
-    }
-
-    const handleEmployeePageChange = (page) => {
-      employeePage.value = page
-      fetchEmployees()
-    }
-
-    return {
-      newEmployee,
-      employees,
-      searchQuery,
-      employeePage,
-      employeePageSize,
-      totalEmployees,
-      updateDialogVisible,
-      selectedEmployee,
-      addEmployee,
-      removeEmployee,
-      openUpdateDialog,
-      updateEmployee,
-      debouncedSearchEmployees,
-      handleEmployeePageChange,
-    }
-  },
+  } catch (error) {
+    console.error('Failed to fetch employees:', error)
+  }
 }
+
+const addEmployee = async () => {
+  try {
+    await api.createEmployee(newEmployee.value)
+    fetchEmployees()
+    newEmployee.value = {
+      name: '',
+      email: '',
+      position: '',
+      salary: 0,
+      sssNumber: '',
+      pagIbigNumber: '',
+      company: '',
+    }
+  } catch (error) {
+    console.error('Failed to add employee:', error)
+  }
+}
+
+const removeEmployee = async (employeeId) => {
+  try {
+    await api.deleteEmployee(employeeId)
+    fetchEmployees()
+  } catch (error) {
+    console.error('Failed to delete employee:', error)
+  }
+}
+
+const openUpdateDialog = (employee) => {
+  selectedEmployee.value = { ...employee }
+  updateDialogVisible.value = true
+}
+
+const updateEmployee = async () => {
+  try {
+    await api.updateEmployee(selectedEmployee.value.id, selectedEmployee.value)
+    fetchEmployees()
+    updateDialogVisible.value = false
+  } catch (error) {
+    console.error('Failed to update employee:', error)
+  }
+}
+
+const debouncedSearchEmployees = () => {
+  fetchEmployees()
+}
+
+const handleEmployeePageChange = (page) => {
+  employeePage.value = page
+  fetchEmployees()
+}
+
+onMounted(() => {
+  fetchEmployees()
+})
 </script>
 
 <style scoped>
 * {
   font-family: 'Trebuchet MS', sans-serif;
-}
-
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 2px solid #a8dadc;
-  padding: 15px;
-  background-color: #f1faee;
-}
-
-.nav-links {
-  display: flex;
-  gap: 20px;
-}
-
-.header-title {
-  margin-left: auto;
-  font-size: 24px;
-  margin-right: 20px; /* Move title to the right */
 }
 
 .aside {
