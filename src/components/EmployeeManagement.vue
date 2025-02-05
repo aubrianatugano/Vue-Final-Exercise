@@ -1,211 +1,295 @@
-<!-- components/EmployeeManagement.vue -->
 <template>
-  <div>
-    <h1>List of Employees</h1>
-    <div class="input-container">
-      <fieldset class="employee-input">
-        <legend>Input Employee</legend>
-        <el-input v-model="newEmployee.name" placeholder="Enter Name" id="name" name="name" />
-        <el-input v-model="newEmployee.email" placeholder="Enter Email" id="email" name="email" />
+  <el-container class="common-layout">
+    <el-header class="header">
+      <h1 class="header-title">Employee Management</h1>
+      <div class="nav-links">
+        <el-link type="primary" href="/companies">Companies</el-link>
+        <el-link type="primary" href="/employees">Employees</el-link>
+        <el-link type="primary" href="/timelogs">TimeLogs</el-link>
+      </div>
+    </el-header>
+
+    <el-container>
+      <el-aside class="aside">
+        <el-form :model="newEmployee" label-width="100px" class="form-section">
+          <h2>Add Employee</h2>
+          <el-form-item label="Name">
+            <el-input v-model="newEmployee.name" placeholder="Enter employee name"></el-input>
+          </el-form-item>
+          <el-form-item label="Email">
+            <el-input v-model="newEmployee.email" placeholder="Enter employee email"></el-input>
+          </el-form-item>
+          <el-form-item label="Position">
+            <el-input
+              v-model="newEmployee.position"
+              placeholder="Enter employee position"
+            ></el-input>
+          </el-form-item>
+          <el-form-item label="Salary">
+            <el-input
+              v-model="newEmployee.salary"
+              type="number"
+              placeholder="Enter employee salary"
+            ></el-input>
+          </el-form-item>
+          <el-form-item label="SSS Number">
+            <el-input v-model="newEmployee.sssNumber" placeholder="Enter SSS number"></el-input>
+          </el-form-item>
+          <el-form-item label="Pag-IBIG Number">
+            <el-input
+              v-model="newEmployee.pagIbigNumber"
+              placeholder="Enter Pag-IBIG number"
+            ></el-input>
+          </el-form-item>
+          <el-form-item label="Company">
+            <el-input v-model="newEmployee.company" placeholder="Enter company"></el-input>
+          </el-form-item>
+          <div class="button-container">
+            <el-button type="success" @click="addEmployee">Add Employee</el-button>
+          </div>
+        </el-form>
+      </el-aside>
+
+      <el-main>
         <el-input
-          v-model="newEmployee.position"
-          placeholder="Enter Position"
-          id="position"
-          name="position"
+          v-model="searchQuery"
+          placeholder="Search Employees"
+          @input="debouncedSearchEmployees"
+          class="search-input"
+          prefix-icon="el-icon-search"
         />
-        <el-input-number
-          v-model.number="newEmployee.salary"
-          placeholder="Enter Salary"
-          id="salary"
-          name="salary"
-        />
-        <el-input
-          v-model="newEmployee.sssNumber"
-          placeholder="Enter SSS Number"
-          id="sssNumber"
-          name="sssNumber"
-        />
-        <el-input
-          v-model="newEmployee.pagIbigNumber"
-          placeholder="Enter Pag-IBIG Number"
-          id="pagIbigNumber"
-          name="pagIbigNumber"
-        />
-        <el-button type="primary" round @click="addEmployee">Add Employee</el-button>
-      </fieldset>
-      <el-input
-        v-model="searchQuery"
-        placeholder="Search Employees"
-        @input="debouncedSearchEmployees"
-      />
-    </div>
-    <el-table :data="employees">
-      <el-table-column prop="name" label="Name" />
-      <el-table-column prop="email" label="Email" />
-      <el-table-column prop="position" label="Position" />
-      <el-table-column prop="salary" label="Salary" />
-      <el-table-column prop="sssNumber" label="SSS Number" />
-      <el-table-column prop="pagIbigNumber" label="Pag-IBIG Number" />
-      <el-table-column label="Actions">
-        <template #default="scope">
-          <el-button type="primary" round @click="openUpdateDialog(scope.row)">Edit</el-button>
-          <el-popconfirm
-            title="Are you sure you want to delete this employee?"
-            @confirm="deleteEmployee(scope.row.id)"
-            ok-text="Yes"
-            cancel-text="No"
-          >
-            <template #reference>
-              <el-button type="danger" round>Delete</el-button>
+
+        <el-table :data="employees" class="employee-table">
+          <el-table-column prop="name" label="Name"></el-table-column>
+          <el-table-column prop="email" label="Email"></el-table-column>
+          <el-table-column prop="position" label="Position"></el-table-column>
+          <el-table-column prop="salary" label="Salary"></el-table-column>
+          <el-table-column prop="sssNumber" label="SSS Number"></el-table-column>
+          <el-table-column prop="pagIbigNumber" label="Pag-IBIG Number"></el-table-column>
+          <el-table-column prop="company" label="Company"></el-table-column>
+          <el-table-column label="Actions">
+            <template #default="scope">
+              <el-button type="primary" @click="openUpdateDialog(scope.row)">Edit</el-button>
+              <el-button type="danger" @click="removeEmployee(scope.row.id)">Delete</el-button>
             </template>
-          </el-popconfirm>
-        </template>
-      </el-table-column>
-    </el-table>
-    <el-dialog v-model="updateDialogVisible" title="Update Employee">
-      <el-form model="selectedEmployee">
-        <el-form-item label="Name"
-          ><el-input v-model="selectedEmployee.name" id="update-name" name="update-name"
-        /></el-form-item>
-        <el-form-item label="Email"
-          ><el-input v-model="selectedEmployee.email" id="update-email" name="update-email"
-        /></el-form-item>
-        <el-form-item label="Position"
-          ><el-input
-            v-model="selectedEmployee.position"
-            id="update-position"
-            name="update-position"
-        /></el-form-item>
-        <el-form-item label="Salary"
-          ><el-input-number
-            v-model.number="selectedEmployee.salary"
-            id="update-salary"
-            name="update-salary"
-        /></el-form-item>
-        <el-form-item label="SSS Number"
-          ><el-input
-            v-model="selectedEmployee.sssNumber"
-            id="update-sssNumber"
-            name="update-sssNumber"
-        /></el-form-item>
-        <el-form-item label="Pag-IBIG Number"
-          ><el-input
-            v-model="selectedEmployee.pagIbigNumber"
-            id="update-pagIbigNumber"
-            name="update-pagIbigNumber"
-        /></el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button round @click="updateDialogVisible = false">Cancel</el-button>
-        <el-button type="primary" round @click="updateEmployee">Save</el-button>
-      </template>
-    </el-dialog>
-  </div>
+          </el-table-column>
+        </el-table>
+
+        <div class="pagination-container">
+          <el-pagination
+            v-model:current-page="employeePage"
+            :page-size="employeePageSize"
+            layout="prev, pager, next"
+            :total="totalEmployees"
+            @current-change="handleEmployeePageChange"
+          />
+        </div>
+
+        <el-dialog v-model="updateDialogVisible" title="Update Employee">
+          <el-form :model="selectedEmployee" label-width="100px">
+            <el-form-item label="Name">
+              <el-input v-model="selectedEmployee.name"></el-input>
+            </el-form-item>
+            <el-form-item label="Email">
+              <el-input v-model="selectedEmployee.email"></el-input>
+            </el-form-item>
+            <el-form-item label="Position">
+              <el-input v-model="selectedEmployee.position"></el-input>
+            </el-form-item>
+            <el-form-item label="Salary">
+              <el-input v-model="selectedEmployee.salary" type="number"></el-input>
+            </el-form-item>
+            <el-form-item label="SSS Number">
+              <el-input v-model="selectedEmployee.sssNumber"></el-input>
+            </el-form-item>
+            <el-form-item label="Pag-IBIG Number">
+              <el-input v-model="selectedEmployee.pagIbigNumber"></el-input>
+            </el-form-item>
+            <el-form-item label="Company">
+              <el-input v-model="selectedEmployee.company"></el-input>
+            </el-form-item>
+          </el-form>
+          <template #footer>
+            <el-button @click="updateDialogVisible = false">Cancel</el-button>
+            <el-button type="primary" @click="updateEmployee">Save</el-button>
+          </template>
+        </el-dialog>
+      </el-main>
+    </el-container>
+  </el-container>
 </template>
 
 <script>
-import { ElMessage } from 'element-plus'
-import { debounce } from 'lodash'
-import api from '@/services/api'
+import { ref } from 'vue'
+import api from '../api'
 
 export default {
-  name: 'EmployeeManagement',
-  data() {
-    return {
-      newEmployee: {
-        name: '',
-        email: '',
-        position: '',
-        salary: 0, // Initialize with 0 instead of an empty string
-        sssNumber: '',
-        pagIbigNumber: '',
-      },
-      employees: [],
-      searchQuery: '',
-      updateDialogVisible: false,
-      selectedEmployee: {},
-    }
-  },
-  methods: {
-    async fetchEmployees() {
-      try {
-        const response = await api.getEmployees({ search: this.searchQuery })
-        console.log(response)
-        this.employees = response.data.results
-      } catch (error) {
-        console.error('Error fetching employees:', error)
-        ElMessage.error('Failed to fetch employees')
-      }
-    },
-    async addEmployee() {
-      if (
-        !this.newEmployee.name ||
-        !this.newEmployee.email ||
-        !this.newEmployee.position ||
-        this.newEmployee.salary === '' ||
-        !this.newEmployee.sssNumber ||
-        !this.newEmployee.pagIbigNumber
-      ) {
-        ElMessage.warning('Please fill all fields')
-        return
-      }
+  setup() {
+    const newEmployee = ref({
+      name: '',
+      email: '',
+      position: '',
+      salary: 0,
+      sssNumber: '',
+      pagIbigNumber: '',
+      company: '',
+    })
+    const employees = ref([])
+    const searchQuery = ref('')
+    const employeePage = ref(1)
+    const employeePageSize = ref(10)
+    const totalEmployees = ref(0)
+    const updateDialogVisible = ref(false)
+    const selectedEmployee = ref({
+      name: '',
+      email: '',
+      position: '',
+      salary: 0,
+      sssNumber: '',
+      pagIbigNumber: '',
+      company: '',
+    })
 
+    const fetchEmployees = async () => {
       try {
-        await api.createEmployee(this.newEmployee)
-        ElMessage.success('Employee added successfully')
-        this.newEmployee = {
+        const response = await api.getEmployees({
+          page: employeePage.value,
+          pageSize: employeePageSize.value,
+          searchQuery: searchQuery.value,
+        })
+        employees.value = response.data
+        totalEmployees.value = response.total
+      } catch (error) {
+        console.error('Failed to fetch employees:', error)
+      }
+    }
+
+    const addEmployee = async () => {
+      try {
+        await api.createEmployee(newEmployee.value)
+        fetchEmployees()
+        newEmployee.value = {
           name: '',
           email: '',
           position: '',
-          salary: 0, // Reset to 0 after adding
+          salary: 0,
           sssNumber: '',
           pagIbigNumber: '',
+          company: '',
         }
-        this.fetchEmployees()
       } catch (error) {
-        console.error('Error adding employee:', error)
-        ElMessage.error('Failed to add employee')
+        console.error('Failed to add employee:', error)
       }
-    },
-    async updateEmployee() {
+    }
+
+    const removeEmployee = async (employeeId) => {
       try {
-        await api.updateEmployee(this.selectedEmployee.id, this.selectedEmployee)
-        ElMessage.success('Employee updated successfully')
-        this.updateDialogVisible = false
-        this.fetchEmployees()
+        await api.deleteEmployee(employeeId)
+        fetchEmployees()
       } catch (error) {
-        console.error('Error updating employee:', error)
-        ElMessage.error('Failed to update employee')
+        console.error('Failed to delete employee:', error)
       }
-    },
-    async deleteEmployee(id) {
+    }
+
+    const openUpdateDialog = (employee) => {
+      selectedEmployee.value = { ...employee }
+      updateDialogVisible.value = true
+    }
+
+    const updateEmployee = async () => {
       try {
-        await api.deleteEmployee(id)
-        ElMessage.success('Employee deleted')
-        this.fetchEmployees()
+        await api.updateEmployee(selectedEmployee.value.id, selectedEmployee.value)
+        fetchEmployees()
+        updateDialogVisible.value = false
       } catch (error) {
-        console.error('Error deleting employee:', error)
-        ElMessage.error('Failed to delete employee')
+        console.error('Failed to update employee:', error)
       }
-    },
-    openUpdateDialog(employee) {
-      this.selectedEmployee = { ...employee }
-      this.updateDialogVisible = true
-    },
-    debouncedSearchEmployees: debounce(function () {
-      this.fetchEmployees()
-    }, 500),
-  },
-  mounted() {
-    this.fetchEmployees()
+    }
+
+    const debouncedSearchEmployees = () => {
+      fetchEmployees()
+    }
+
+    const handleEmployeePageChange = (page) => {
+      employeePage.value = page
+      fetchEmployees()
+    }
+
+    return {
+      newEmployee,
+      employees,
+      searchQuery,
+      employeePage,
+      employeePageSize,
+      totalEmployees,
+      updateDialogVisible,
+      selectedEmployee,
+      addEmployee,
+      removeEmployee,
+      openUpdateDialog,
+      updateEmployee,
+      debouncedSearchEmployees,
+      handleEmployeePageChange,
+    }
   },
 }
 </script>
 
 <style scoped>
-.input-container {
+* {
+  font-family: 'Trebuchet MS', sans-serif;
+}
+
+.header {
   display: flex;
-  gap: 10px;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid #a8dadc;
+  padding: 15px;
+  background-color: #f1faee;
+}
+
+.nav-links {
+  display: flex;
+  gap: 20px;
+}
+
+.header-title {
+  margin-left: auto;
+  font-size: 24px;
+  margin-right: 20px; /* Move title to the right */
+}
+
+.aside {
+  border-right: 2px solid #a8dadc;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: #f1faee;
+  position: relative;
+}
+
+.button-container {
+  width: 100%;
+  position: absolute;
+  bottom: 20px;
+  left: 0;
+  padding: 10px;
+  text-align: center;
+}
+
+.search-input {
+  width: 100%;
   margin-bottom: 20px;
+}
+
+.pagination-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  position: fixed;
+  bottom: 10px;
+  left: 0;
 }
 </style>
